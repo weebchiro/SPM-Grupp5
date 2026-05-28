@@ -61,6 +61,7 @@ void AConveyorBeltUpgraded::RemoveFromBelt(AItem* Item)
 				First = Current->Next;
 			}
 			Item->SetPhysics(true);
+			Item->SetCollitionDefultProfile(true);
 			Item ->Conveyor = nullptr; //sluta peka på denna conveyor
 			Item->ConveyorUpgraded = nullptr;
 			//Current -> Destroy();
@@ -87,6 +88,7 @@ void AConveyorBeltUpgraded::RemoveFromBelt(FObjectOnBelt* Obj)
 				First = Current->Next;
 			}
 			Current->Item->SetPhysics(true);
+			Current->Item->SetCollitionDefultProfile(true);
 			Current->Item ->Conveyor = nullptr; //sluta peka på denna conveyor
 			Current->Item->ConveyorUpgraded = nullptr;
 			//Current -> Destroy();
@@ -113,7 +115,8 @@ void AConveyorBeltUpgraded::AddToBelt(AItem* Item)
 	FObjectOnBelt* Obj = new FObjectOnBelt(Item,nullptr, MovedDelta,Offset);
 	//Item->Conveyor = this; 
 	Item->ConveyorUpgraded = this;
-	Item->SetPhysics(false);
+	Item->SetPhysics(false);	
+	Item->SetCollitionDefultProfile(false);
 	
 	if (First==nullptr || Obj->MovedDelta < 1) //moved delta grejen kan tas bort, bara här temporarily
 	{

@@ -8,18 +8,15 @@ void USpawnAI::SetupSpawner(int InAmountOfBoxesPerLevel, TMap<EBoxType, double> 
 {
 	Boxes.Empty();
 	
-	AmountOfBoxesPerLevel = InAmountOfBoxesPerLevel;
-	AmountOfBoxesPerLevelLevelStart = InAmountOfBoxesPerLevel;
+	TotalBoxCount = InAmountOfBoxesPerLevel;
 	
 	SpawnRates = InSpawnRates;
-	SpawnRatesLevelStart = InSpawnRates;
 	
 	DangerousTypes = InDangerousTypes;
-	DangerousTypesLevelStart = InDangerousTypes;
 	
 	ConvertAllPercentageToBoxes();
 	
-	UE_LOG(LogTemp, Warning, TEXT("All boxes remaining: %d"), AmountOfBoxesPerLevel);
+	UE_LOG(LogTemp, Warning, TEXT("All boxes remaining: %d"), TotalBoxCount);
 	for (const FBoxSpawnInfo& Info : Boxes)
 	{
 		UE_LOG(LogTemp, Warning,
@@ -29,26 +26,69 @@ void USpawnAI::SetupSpawner(int InAmountOfBoxesPerLevel, TMap<EBoxType, double> 
 			Info.CurrentSpawnRate,
 			Info.CountSinceLastSpawn);
 	}
-	/*
-	for (int i = 0; i < 839; i++)
+	
+	for (int i = 0; i < 8390; i++)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Box %d: "), i);
 		TArray<EBoxType> props = ConstructBox();
-		if (AmountOfBoxesPerLevel > 0) AmountOfBoxesPerLevel--;
+		if (TotalBoxCount > 0) TotalBoxCount--;
 		for (EBoxType Type : props)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("		: %d"), Type);
 		}
+		for (const FBoxSpawnInfo& Info : Boxes)
+		{
+			UE_LOG(LogTemp, Warning,
+				TEXT("BoxType: %s | RemainingBoxes: %d | CurrentSpawnRate: %.2f | CountSinceLastSpawn: %d"),
+				*UEnum::GetValueAsString(Info.BoxType),
+				Info.RemainingBoxes,
+				Info.CurrentSpawnRate,
+				Info.CountSinceLastSpawn);
+		}
 	}
-	*/
-}
-
-void USpawnAI::SetupSpawnerOnRestart()
-{
-	SetupSpawner(AmountOfBoxesPerLevelLevelStart, SpawnRatesLevelStart, DangerousTypesLevelStart);
+	
+	for (const FBoxSpawnInfo& Info : Boxes)
+	{
+		UE_LOG(LogTemp, Warning,
+			TEXT("BoxType: %s | RemainingBoxes: %d | CurrentSpawnRate: %.2f | CountSinceLastSpawn: %d"),
+			*UEnum::GetValueAsString(Info.BoxType),
+			Info.RemainingBoxes,
+			Info.CurrentSpawnRate,
+			Info.CountSinceLastSpawn);
+	}
+	UE_LOG(LogTemp, Warning, TEXT("All boxes remaining: %d"), TotalBoxCount);
+	
 }
 
 TArray<EBoxType> USpawnAI::ConstructBox()
+{
+	
+	for (FBoxSpawnInfo& Box : Boxes)
+	{
+		if (DangerousTypes.Contains(Box.BoxType))
+		{
+			SetUpSpawnRate(Box.CurrentSpawnRate, Box.RemainingBoxes, GetSpawnInfo(EBoxType::Dangerous).RemainingBoxes);
+			continue;
+		}
+		if (Box.BoxType == EBoxType::Dangerous)
+		{
+			SetUpSpawnRate(Box.CurrentSpawnRate, Box.RemainingBoxes, GetSpawnInfo(EBoxType::Suspicious).RemainingBoxes);
+			continue;
+		}
+		SetUpSpawnRate(Box.CurrentSpawnRate, Box.RemainingBoxes, TotalBoxCount);
+	}
+	
+	TArray<EBoxType> Properties = DecideProperties();
+	
+	for (EBoxType BoxType : AllBoxTypes)
+	{
+		if (!Properties.Contains(BoxType)) GetSpawnInfo(BoxType).IncreaseCounter();
+	}
+	
+	return Properties;
+}
+
+TArray<EBoxType> USpawnAI::DecideProperties()
 {
 	TArray<EBoxType> Properties;
 	if (Boxes.IsEmpty()) return Properties;
@@ -78,11 +118,11 @@ TArray<EBoxType> USpawnAI::ConstructBox()
 	}
 	
 	//Roll if fragile
-	if (!GuaranteeProperty(Properties, EBoxType::Fragile, AmountOfBoxesPerLevel))
+	if (!GuaranteeProperty(Properties, EBoxType::Fragile, TotalBoxCount))
 		if (RollForProperty(EBoxType::Fragile)) AddProperty(Properties, EBoxType::Fragile);
 	
 	//Roll if suspicious
-	if (!GuaranteeProperty(Properties, EBoxType::Suspicious, AmountOfBoxesPerLevel))
+	if (!GuaranteeProperty(Properties, EBoxType::Suspicious, TotalBoxCount))
 	{
 		if (!RollForProperty(EBoxType::Suspicious)) return Properties;
 		AddProperty(Properties, EBoxType::Suspicious);
@@ -138,32 +178,33 @@ void USpawnAI::ConvertAllPercentageToBoxes()
 	// Set up all boxes of every enum
 	for (EBoxType BoxType : AllBoxTypes)
 	{
+		if (BoxType == EBoxType::Large) continue;
 		FBoxSpawnInfo BoxSpawnInfo = FBoxSpawnInfo(BoxType);
 		int RemainingBoxes;
-		double SpawnRate = 0;
+		//double SpawnRate = 0;
 		
 		if (DangerousTypes.Contains(BoxType))
 		{
 			double Percentage = ConvertWeightToPercentage(DangerousTypes[BoxType], TotalWeight);
 			ConvertPercentageToBox(Percentage, RemainingBoxes, GetSpawnInfo(EBoxType::Dangerous).RemainingBoxes);
-			SetUpSpawnRate(SpawnRate, RemainingBoxes, GetSpawnInfo(EBoxType::Dangerous).RemainingBoxes);
+			//SetUpSpawnRate(SpawnRate, RemainingBoxes, GetSpawnInfo(EBoxType::Dangerous).RemainingBoxes);
 		}
 		else
 		{
-			BoxType == EBoxType::Dangerous ? ConvertPercentageToBox(SpawnRates[BoxType], RemainingBoxes, GetSpawnInfo(EBoxType::Suspicious).RemainingBoxes) : ConvertPercentageToBox(SpawnRates[BoxType], RemainingBoxes, AmountOfBoxesPerLevel);
-			BoxType == EBoxType::Dangerous ? SetUpSpawnRate(SpawnRate, RemainingBoxes, GetSpawnInfo(EBoxType::Suspicious).RemainingBoxes) : SetUpSpawnRate(SpawnRate, RemainingBoxes, AmountOfBoxesPerLevel); 
+			BoxType == EBoxType::Dangerous ? ConvertPercentageToBox(SpawnRates[BoxType], RemainingBoxes, GetSpawnInfo(EBoxType::Suspicious).RemainingBoxes) : ConvertPercentageToBox(SpawnRates[BoxType], RemainingBoxes, TotalBoxCount);
+			//BoxType == EBoxType::Dangerous ? SetUpSpawnRate(SpawnRate, RemainingBoxes, GetSpawnInfo(EBoxType::Suspicious).RemainingBoxes) : SetUpSpawnRate(SpawnRate, RemainingBoxes, TotalBoxCount); 
 		}
 		
 		BoxSpawnInfo.RemainingBoxes = RemainingBoxes;
-		BoxSpawnInfo.CurrentSpawnRate = SpawnRate;
+		//BoxSpawnInfo.CurrentSpawnRate = SpawnRate;
 		Boxes.Add(BoxSpawnInfo);
 		
 		if (BoxType == EBoxType::Small)
 		{
 			FBoxSpawnInfo LargeSpawnInfo = FBoxSpawnInfo(EBoxType::Large);
-			LargeSpawnInfo.RemainingBoxes = AmountOfBoxesPerLevel-RemainingBoxes;
-			SetUpSpawnRate(SpawnRate, LargeSpawnInfo.RemainingBoxes, AmountOfBoxesPerLevel);
-			LargeSpawnInfo.CurrentSpawnRate = SpawnRate;
+			LargeSpawnInfo.RemainingBoxes = TotalBoxCount-RemainingBoxes;
+			//SetUpSpawnRate(SpawnRate, LargeSpawnInfo.RemainingBoxes, TotalBoxCount);
+			//LargeSpawnInfo.CurrentSpawnRate = SpawnRate;
 			Boxes.Add(LargeSpawnInfo);
 		}
 	}
@@ -253,6 +294,15 @@ bool USpawnAI::GuaranteeProperty(TArray<EBoxType>& Properties, EBoxType BoxType,
 		AddProperty(Properties, BoxType);
 		return true;
 	}
+	
+	/*int CurrentCounter = 1/GetSpawnInfo(BoxType).CurrentSpawnRate;
+	
+	if (CurrentCounter < GetSpawnInfo(BoxType).CountSinceLastSpawn && GetSpawnInfo(BoxType).RemainingBoxes > 0)
+	{
+		AddProperty(Properties, BoxType);
+		return true;
+	}*/
+	
 	return false;
 }
 

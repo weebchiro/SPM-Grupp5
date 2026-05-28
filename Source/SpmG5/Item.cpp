@@ -89,13 +89,17 @@ void AItem::SetNegativePoints()
 
 void AItem::SetPhysics(bool SetTo)
 {
+	// SetActorEnableCollision(SetTo);
+	PrimComp->SetEnableGravity(SetTo);
+	PrimComp->SetSimulatePhysics(SetTo);
+}
+
+void AItem::SetCollitionDefultProfile(bool SetTo)
+{
 	if (SetTo)
 		PrimComp->SetCollisionProfileName("DefaultItem");
 	else 
 		PrimComp->SetCollisionProfileName("OnConveyor");//OnlyRaycast
-	// SetActorEnableCollision(SetTo);
-	PrimComp->SetEnableGravity(SetTo);
-	PrimComp->SetSimulatePhysics(SetTo);
 }
 
 void AItem::CalculateIfBreakIfFragile()

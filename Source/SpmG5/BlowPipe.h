@@ -27,8 +27,6 @@ protected:
 	float TimeLeftBlowing = 0.0f;
 	FRandomStream Stream = FRandomStream(0);
 	
-	UFUNCTION(BlueprintCallable)
-	void BlowFromBP(UPrimitiveComponent* Component, float DeltaTime);
 	UFUNCTION(BlueprintImplementableEvent, Blueprintable)
 	void ActivateBlowing(bool Blowing);
 	
@@ -37,27 +35,29 @@ protected:
 	void CallBlowMethod();
 	void BlowStateLoop(float LoopRate);
 	void ShowIndicator();
+	UFUNCTION(BlueprintCallable)
+	float GetForceMultiplier(){return ForceMultiplier;}
 	
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	UPROPERTY(EditAnywhere)
+	//UPROPERTY(EditAnywhere)
 	FVector BlowBoxSize = FVector(120.0f, 50.0f, 50.0f);
 
-	UPROPERTY(EditAnywhere)
+	//UPROPERTY(EditAnywhere)
 	FVector Offcset = FVector(0.0f, 100.0f, 0.0f);
 	
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category="Blow Settings")
 	float BlowTime = 5;
 	
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category="Blow Settings")
 	float BlowIndicatorTime = 3;
 	
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category="Blow Settings")
 	FVector2f WaitTimeRange = FVector2f(5.0,10.0);
 	
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere,Category="Blow Settings")
 	float ForceMultiplier = 500;
 	
 	UPROPERTY(VisibleAnywhere)

@@ -18,10 +18,6 @@ struct FInputActionValue;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
-/**
- *  A simple player-controllable third person character
- *  Implements a controllable orbiting camera
- */
 UCLASS(abstract)
 class ASpmG5Character : public ACharacter
 {
@@ -68,19 +64,20 @@ protected:
 	UPROPERTY(EditAnywhere)
 	float TurningSpeed = 5;
 	
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(BlueprintReadWrite, Category="Trowing settings")
 	bool Throwing = false;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(BlueprintReadWrite, Category="Trowing settings")
+	bool Thrown = false;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Trowing settings")
 	float MaxThrowForce = 500.0f;
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category="Trowing settings")
 	float ThrowForceIncrease = 500.0f;
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category="Trowing settings")
 	float StartingThrowForce = 300.0f;
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category="Trowing settings")
 	float CurrentThrowForce = 300.0f;
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category="Trowing settings")
 	float MovementDebufMult = 8.0f;
-	
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool HasItem = false;
@@ -96,22 +93,12 @@ protected:
 	UPROPERTY()
 	AItem* ItemToPickup;
 
-	/** Jump Input Action */
 	UPROPERTY(EditAnywhere, Category="Input")
 	UInputAction* JumpAction;
 
-	/** Move Input Action */
 	UPROPERTY(EditAnywhere, Category="Input")
 	UInputAction* MoveAction;
-
-	/** Look Input Action */
-	//UPROPERTY(EditAnywhere, Category="Input")
-	//UInputAction* LookAction;
-
-	/** Mouse Look Input Action */
-	//UPROPERTY(EditAnywhere, Category="Input")
-	//UInputAction* MouseLookAction;
-
+	
 	UPROPERTY(EditAnywhere, Category = "Input")
 	UInputAction* PickupOrDropAction;
 	
@@ -143,7 +130,6 @@ protected:
 	void ShowOrHideThrowBar(bool SetTo);
 	
 public:
-
 	/** Constructor */
 	ASpmG5Character();	
 
@@ -159,20 +145,14 @@ protected:
 	/** Called for movement input */
 	void Move(const FInputActionValue& Value);
 
-	/** Called for looking input */
-	/*
-	void Look(const FInputActionValue& Value);
-	*/
-
 	//metod som sweepar för att hitta items & interactable
 	TArray<FHitResult> DoSweep();
 	void FindBoxToPickup();
 	void ChooseInteractOrPickup();
 	
-	void PickupAndDrop(const FInputActionValue& Value);
 	void AttachPackage();
 	
-	void Pickup();
+	
 	void Hold();
 	
 	UFUNCTION(BlueprintCallable)
@@ -187,23 +167,24 @@ public:
 	void AddVelocity(FVector Force){AddMovementInput(Force);}
 
 	
+	UFUNCTION(BlueprintCallable, Blueprintable, BlueprintImplementableEvent)
+	void AttatchPackageToConstaint(AItem* ItemToAttatch);
+	UFUNCTION(BlueprintCallable, Blueprintable, BlueprintImplementableEvent)
+	void DeAattatchPackageToConstaint(AItem* ItemToDeattatch);
+	
 	UFUNCTION(BlueprintCallable, Category="Item Reactions")
 	void IncreaseIncapacitation(float Increase = 2);
 	UFUNCTION(BlueprintCallable, Category="Item Reactions")
 	void DecreaseIncapacitation(float Decrease = 1);
 
-	UFUNCTION(BlueprintCallable, Category="Physics")
+	UFUNCTION(BlueprintImplementableEvent, Blueprintable, BlueprintCallable, Category="Physics")
 	void DoRagdoll();
-	UFUNCTION(BlueprintCallable, Category="Physics")
+	UFUNCTION(BlueprintImplementableEvent, Blueprintable, BlueprintCallable, Category="Physics")
 	void StopRagdoll();
 	
 	/** Handles move inputs from either controls or UI interfaces */
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoMove(float Right, float Forward);
-
-	/** Handles look inputs from either controls or UI interfaces */
-	/*UFUNCTION(BlueprintCallable, Category="Input")
-	virtual void DoLook(float Yaw, float Pitch);*/
 
 	/** Handles jump pressed inputs from either controls or UI interfaces */
 	UFUNCTION(BlueprintCallable, Category="Input")
@@ -227,13 +208,5 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category="Input")
 	void Pause();
-	
-public:
-
-	/** Returns CameraBoom subobject **/
-	/*FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
-
-	/** Returns FollowCamera subobject *#1#
-	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }*/
 };
 

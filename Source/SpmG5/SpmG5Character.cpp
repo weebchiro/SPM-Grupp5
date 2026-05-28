@@ -1,4 +1,3 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "SpmG5Character.h"
 #include "Item.h"
@@ -17,9 +16,7 @@
 #endif
 #include "SpmG5.h"
 #include "FMODBlueprintStatics.h"
-#include "IDetailTreeNode.h"
 #include "Interactable.h"
-#include "Kismet/GameplayStatics.h"
 
 ASpmG5Character::ASpmG5Character()
 {
@@ -44,18 +41,6 @@ ASpmG5Character::ASpmG5Character()
 	GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
 	GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
 
-	// Create a camera boom (pulls in towards the player if there is a collision)
-	/*CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
-	CameraBoom->SetupAttachment(RootComponent);
-	CameraBoom->TargetArmLength = 400.0f;
-	CameraBoom->bUsePawnControlRotation = true;
-													
-	// Create a follow camera
-	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
-	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
-	FollowCamera->bUsePawnControlRotation = false;
-	
-	FollowCamera->bUsePawnControlRotation = false;*/
 	HoldingLocation = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("HoldingLocation"));
 	HoldingLocation->SetupAttachment(RootComponent);
 	
@@ -64,8 +49,6 @@ ASpmG5Character::ASpmG5Character()
 	//OM vi vill ha den i timer så får vi fixa det här
 	// GetWorld()->GetTimerManager().SetTimer(OutlineUpdateTimer, this, &ASpmG5Character::DoSweep(false), OutlineUpdateRate, true, 1);
 	
-	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
-	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
 }
 
 void ASpmG5Character::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -79,10 +62,6 @@ void ASpmG5Character::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 
 		// Moving
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ASpmG5Character::Move);
-		//EnhancedInputComponent->BindAction(MouseLookAction, ETriggerEvent::Triggered, this, &ASpmG5Character::Look);
-
-		// Looking
-		//EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ASpmG5Character::Look);
 
 		// Pickup and Drop
 		EnhancedInputComponent->BindAction(PickupOrDropAction, ETriggerEvent::Started, this, &ASpmG5Character::ChooseInteractOrPickup);//PickupAndDrop
@@ -232,19 +211,27 @@ void ASpmG5Character::Pickup(AItem* Item)
 	{
 		Item->ShouldBreakOnImpact = false;
 	}
-	AttachPackage();
 	Item->SetIsHeld(true);
+	
+	AttachPackage();
+	UE_LOG(LogTemp, Display, TEXT("%i"), Item->GetIsHeld());
 }
 
 void ASpmG5Character::AttachPackage()
 {
-	HeldItem->SetPhysics(false);
+	HeldItem->SetCollitionDefultProfile(false);
+	HeldItem->SetPhysics(true);
 	HeldItem->ResetVelocity();
+	HeldItem->SetActorRotation(GetActorRotation()); 
+	// HeldItem->SetActorRelativeRotation(FRotator(0,0,0));
 	HeldItem->SetActorRelativeLocation(HoldingLocation->GetComponentLocation());
-	HeldItem->SetActorRelativeRotation(FRotator(0,0,0));
+	// HeldItem->SetActorRelativeRotation(FRotator(0,0,0));
 	HeldItem->SetMostRecentHolder(this);
 	
-	GetWorldTimerManager().SetTimer(HoldingTimer, this, &ASpmG5Character::Hold, 0.01f, true);
+	AttatchPackageToConstaint(HeldItem);
+	
+	// HeldItem->SetActorRelativeRotation(FRotator(0,0,0));
+	// GetWorldTimerManager().SetTimer(HoldingTimer, this, &ASpmG5Character::Hold, 0.01f, true);
 	
 	// Play Pickup SFX
 	FFMODEventInstance evt = UFMODBlueprintStatics::PlayEventAtLocation(this, PickupSFX, FTransform(GetActorLocation()), true);
@@ -278,8 +265,9 @@ AItem* ASpmG5Character::Drop()
 		
 		
 	//Resetting Box
-	GetWorldTimerManager().ClearTimer(HoldingTimer);
+	//GetWorldTimerManager().ClearTimer(HoldingTimer);
 	HeldItem->SetPhysics(true);
+	HeldItem->SetCollitionDefultProfile(true);
 	HeldItem->ResetVelocity();	
 	
 	AItem* Item = HeldItem;
@@ -294,6 +282,7 @@ AItem* ASpmG5Character::Drop()
 	HeldItem = nullptr;
 	HasItem = false;
 	Throwing = false;	
+	DeAattatchPackageToConstaint(HeldItem);
 	Item->SetIsHeld(false);
 	return Item;
 }
@@ -320,9 +309,13 @@ void ASpmG5Character::Throw(const FInputActionValue& Value)
 	if (!HeldItem)
 		return;
 	
+	Thrown = true;
+	
 	ShowOrHideThrowBar(false);
 	HeldItem->SetPhysics(true);
-	HeldItem->AddVelocity(CurrentThrowForce);
+	HeldItem->SetCollitionDefultProfile(true);
+	DeAattatchPackageToConstaint(HeldItem);
+	HeldItem->AddVelocity(CurrentThrowForce, GetActorForwardVector());
 	
 	float HalfThrowForce = StartingThrowForce + ((MaxThrowForce - StartingThrowForce) * 0.66);
 	
@@ -345,7 +338,8 @@ void ASpmG5Character::Throw(const FInputActionValue& Value)
 	HeldItem = nullptr;
 	HasItem = false;
 	Throwing = false;
-	GetWorldTimerManager().ClearTimer(HoldingTimer);
+	// Thrown = false;
+	// GetWorldTimerManager().ClearTimer(HoldingTimer);
 }
 
 void ASpmG5Character::ChargeUpThrow(const FInputActionValue& Value)
@@ -356,7 +350,6 @@ void ASpmG5Character::ChargeUpThrow(const FInputActionValue& Value)
 		Throwing = true;
 	
 	ShowOrHideThrowBar(true);
-	//add arrow and charge up thing
 	
 	if (CurrentThrowForce < MaxThrowForce)
 		CurrentThrowForce += ThrowForceIncrease * GetWorld()->DeltaTimeSeconds;
@@ -409,17 +402,7 @@ void ASpmG5Character::Move(const FInputActionValue& Value)
 	}
 	DoMove(MovementVector.X, MovementVector.Y);	
 		
-	// route the input
 }
-
-/*void ASpmG5Character::Look(const FInputActionValue& Value)
-{
-	// input is a Vector2D
-	FVector2D LookAxisVector = Value.Get<FVector2D>();
-
-	// route the input
-	DoLook(LookAxisVector.X, LookAxisVector.Y);
-}*/
 
 void ASpmG5Character::IncreaseIncapacitation(float Increase)
 {
@@ -447,19 +430,6 @@ void ASpmG5Character::DecreaseIncapacitation(float Decrease)
 		
 }
 
-void ASpmG5Character::DoRagdoll()
-{
-	UE_LOG(LogTemp, Warning, TEXT("DoRagdoll"));
-	bIsRagdolling = true;
-	Drop();
-}
-
-void ASpmG5Character::StopRagdoll()
-{
-	UE_LOG(LogTemp, Warning, TEXT("DoRagdoll"));
-	bIsRagdolling = false;
-}
-
 void ASpmG5Character::DoMove(float Right, float Forward)
 {
 	if (GetController() != nullptr)
@@ -478,16 +448,6 @@ void ASpmG5Character::DoMove(float Right, float Forward)
 		AddMovementInput(RightDirection, Right);
 	}
 }
-
-/*void ASpmG5Character::DoLook(float Yaw, float Pitch)
-{
-	if (GetController() != nullptr)
-	{
-		// add yaw and pitch input to controller
-		AddControllerYawInput(Yaw);
-		AddControllerPitchInput(Pitch);
-	}
-}*/
 
 void ASpmG5Character::DoJumpStart()
 {
@@ -509,4 +469,3 @@ AItem* ASpmG5Character::GetItem()
 {
 	return HeldItem;
 }
-

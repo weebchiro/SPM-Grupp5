@@ -30,30 +30,25 @@ void ABlowPipe::BeginPlay()
 	BlowStateLoop(TimeBeforeBlowing);
 }
 
-void ABlowPipe::BlowFromBP(UPrimitiveComponent* Component, float DeltaTime)
-{
-	Component->GetOwner()->SetActorLocation(Component->GetOwner()->GetActorLocation() + GetActorForwardVector() * ForceMultiplier * DeltaTime);
-}
-
 void ABlowPipe::Blow(float DeltaTime)
 {
 	//Doing sweep
-	TArray<FHitResult> HitResult;
-	FVector Location = GetActorLocation() + Offcset * GetActorForwardVector();	
-	FVector End = Location * GetActorForwardVector() * 5;
-	FCollisionShape Box = FCollisionShape::MakeBox(BlowBoxSize);
-	FQuat Rotation = GetActorRotation().Quaternion();
-	GetWorld()->SweepMultiByChannel(HitResult,Location, End, Rotation, ECC_GameTraceChannel4,Box);
-	
-	TimeLeftBlowing -= DeltaTime;
-	
-	DrawDebugBox(GetWorld(), Location, FVector(BlowBoxSize.Y, BlowBoxSize.X, BlowBoxSize.Z), FColor::Red, false, 1);
-	//Moves components
-	for (FHitResult Result : HitResult)
-	{
-		Result.GetComponent()->GetOwner()->SetActorLocation(Result.GetComponent()->GetOwner()->GetActorLocation() + GetActorForwardVector() * ForceMultiplier * DeltaTime);
-	}
-	
+	// TArray<FHitResult> HitResult;
+	// FVector Location = GetActorLocation() + Offcset * GetActorForwardVector();	
+	// FVector End = Location * GetActorForwardVector() * 5;
+	// FCollisionShape Box = FCollisionShape::MakeBox(BlowBoxSize);
+	// FQuat Rotation = GetActorRotation().Quaternion();
+	// GetWorld()->SweepMultiByChannel(HitResult,Location, End, Rotation, ECC_GameTraceChannel4,Box);
+	//
+	// TimeLeftBlowing -= DeltaTime;
+	//
+	// DrawDebugBox(GetWorld(), Location, FVector(BlowBoxSize.Y, BlowBoxSize.X, BlowBoxSize.Z), FColor::Red, false, 1);
+	// //Moves components
+	// for (FHitResult Result : HitResult)
+	// {
+	// 	Result.GetComponent()->GetOwner()->SetActorLocation(Result.GetComponent()->GetOwner()->GetActorLocation() + GetActorForwardVector() * ForceMultiplier * DeltaTime);
+	// }
+	//
 }
 
 void ABlowPipe::StartBlowing()
@@ -69,8 +64,10 @@ void ABlowPipe::CallBlowMethod()
 	//Stop Showing Indicator
 	UE_LOG(LogTemp, Warning, TEXT("Blowing Loop! Time left: %f"), TimeLeftBlowing);
 	if (TimeLeftBlowing > 0)
+	{
 		ActivateBlowing(true);
-		//Blow(GetWorld()->GetDeltaSeconds());
+		TimeLeftBlowing -= GetWorld()->GetDeltaSeconds();
+	}
 	else
 	{		
 		//Resett Timer and stop blowing

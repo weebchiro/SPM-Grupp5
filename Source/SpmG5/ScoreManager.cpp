@@ -84,8 +84,12 @@ void UScoreManager::ChangeCombo(int Change)
 		OnComboBreak.Broadcast();
 		return;
 	}
-	//if (ComboMultiplier > 1)
+
 	StartTimer();
+	if (ComboMultiplier > 5) //max 5 i kombo multi
+	{
+		ComboMultiplier = 5;
+	}
 	OnComboChanged.Broadcast();
 }
 
