@@ -88,6 +88,7 @@ void ABlowPipe::BlowStateLoop(float LoopRate)
 void ABlowPipe::ShowIndicator()
 {
 	GetWorldTimerManager().ClearTimer(IndicatorTimer);	
+	ShowIndication();
 	UE_LOG(LogTemp, Warning, TEXT("Showing Indicator"));
 }
 

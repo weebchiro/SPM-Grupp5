@@ -295,7 +295,7 @@ void AItem::SetIsDangerous(bool SetTo)
 	IsDangerous = SetTo;
 }
 
-void AItem::SetAddress(BoxAddress NewAddress)
+void AItem::SetAddress(EBoxAddress NewAddress)
 {
 	Address = NewAddress;
 }

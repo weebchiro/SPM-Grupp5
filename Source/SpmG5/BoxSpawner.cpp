@@ -70,10 +70,12 @@ AItem* ABoxSpawner::SpawnItem()
 	
 	TSubclassOf<AActor> ItemToSpawn = BoxToSpawn;
 	TArray<EBoxType> Properties = SpawnAI->ConstructBox();
+	
 	if (Properties.IsEmpty())
 	{
 		return nullptr;
 	}
+	
 	if (Properties.Contains(EBoxType::Dangerous))
 	{
 		ItemToSpawn = BombToSpawn;
@@ -93,7 +95,7 @@ AItem* ABoxSpawner::SpawnItem()
 		Item->SetIsSuspicious(Properties.Contains(EBoxType::Suspicious));
 		Item->SetIsDangerous(Properties.Contains(EBoxType::Dangerous));
 		
-		Item->SetAddress(SetBoxAddress());
+		Item->SetAddress(SpawnAI->SetAddress());
 		
 		Item->SetPlaySound(PlayBoxSound);
 	}
@@ -108,7 +110,7 @@ AItem* ABoxSpawner::SpawnBox()
 	return SpawnItem();
 }
 
-AItem* ABoxSpawner::SpawnItem(bool IsDangerous, bool IsLarge, bool IsFragile, bool IsSuspicious, BoxAddress Address)
+AItem* ABoxSpawner::SpawnItem(bool IsDangerous, bool IsLarge, bool IsFragile, bool IsSuspicious, EBoxAddress Address)
 {
 	FTransform SpawnTransform = FTransform(FRotator::ZeroRotator, SpawnLocation->GetComponentLocation());
 	
@@ -170,20 +172,20 @@ bool ABoxSpawner::ShouldHappen(int Percentage)
 }
 
 // I hate this solution
-BoxAddress ABoxSpawner::SetBoxAddress()
+EBoxAddress ABoxSpawner::SetBoxAddress()
 {
 	int number = FMath::RandRange(0, 2);
 	
 	switch (number)
 	{
 		case 0:
-			return BoxAddress::CIRCLE;
+			return EBoxAddress::CIRCLE;
 		case 1:
-			return BoxAddress::SQUARE;
+			return EBoxAddress::SQUARE;
 		// case 2:
 		// 	return BoxAddress::TRIANGLE;
 		default:
-			return BoxAddress::CIRCLE;
+			return EBoxAddress::CIRCLE;
 	}
 	
 	//uint8 hks = FMath::RandHelper(BoxAddress::TOTAL_COUNT);

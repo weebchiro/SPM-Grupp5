@@ -380,6 +380,11 @@ void ASpmG5Character::Tick(float DeltaTime)
 
 void ASpmG5Character::Move(const FInputActionValue& Value)
 {	
+	if (bIsRagdolling)
+	{
+		StopRagdoll();
+		return;
+	}
 	// input is a Vector2D
 	FVector2D MovementVector = Value.Get<FVector2D>();
 	

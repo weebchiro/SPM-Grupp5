@@ -30,6 +30,9 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent, Blueprintable)
 	void ActivateBlowing(bool Blowing);
 	
+	UFUNCTION(BlueprintImplementableEvent, Blueprintable)
+	void ShowIndication();
+	
 	void Blow(float DeltaTime);
 	void StartBlowing();
 	void CallBlowMethod();

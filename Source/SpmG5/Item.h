@@ -15,11 +15,37 @@ class AConveyorBeltUpgraded;
 class AConveyorBelt; // forward-declaration
 
 UENUM(BlueprintType)
-enum class BoxAddress : uint8
+enum class EBoxAddress : uint8
 {
 	CIRCLE,
 	SQUARE,
 	TRIANGLE,
+};
+
+USTRUCT(BlueprintType)
+struct FAddressInfo
+{
+	GENERATED_BODY()
+	
+	FAddressInfo(){}
+	
+	FAddressInfo(EBoxAddress InAddress){BoxAddress = InAddress;}
+	
+	EBoxAddress BoxAddress;
+	int RemainingBoxes;
+	double CurrentSpawnRate;
+	int CountSinceLastSpawn = 0;
+	
+	void DecrementBoxAddressCount()
+	{
+		RemainingBoxes--;
+		CountSinceLastSpawn = 0;
+	}
+	
+	void IncreaseAddressCounter()
+	{
+		CountSinceLastSpawn++;
+	}
 };
 
 UCLASS()
@@ -73,7 +99,7 @@ protected:
 	UFMODEvent* DestroySFX;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	BoxAddress Address = BoxAddress::SQUARE;
+	EBoxAddress Address = EBoxAddress::SQUARE;
 	
 	UPROPERTY(EditAnywhere)
 	bool IsFragile;
@@ -195,7 +221,7 @@ public:
 	int GetPoints(){return Points;}
 	
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-	BoxAddress GetAddress(){return Address;}
+	EBoxAddress GetAddress(){return Address;}
 	
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	bool GetIsHeld(){return IsHeld;}
@@ -210,7 +236,7 @@ public:
 	void SetIsFragile(bool SetTo);
 	void SetIsSuspicious(bool SetTo);
 	void SetIsDangerous(bool SetTo);
-	void SetAddress(BoxAddress NewAddress);
+	void SetAddress(EBoxAddress NewAddress);
 
 	UFUNCTION(BlueprintImplementableEvent, Blueprintable, BlueprintCallable)
 	void ActivateOvelay(bool SetTo);

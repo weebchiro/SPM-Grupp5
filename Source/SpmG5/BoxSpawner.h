@@ -40,7 +40,7 @@ private:
 	USpawnAI* SpawnAI;
 	
 	UFUNCTION(BlueprintCallable)
-	AItem* SpawnItem(bool IsDangerous, bool IsLarge, bool IsFragile, bool IsSuspicious, BoxAddress Address);
+	AItem* SpawnItem(bool IsDangerous, bool IsLarge, bool IsFragile, bool IsSuspicious, EBoxAddress Address);
 	
 	void SpawnBoxOnPoint();
 	void LoopSpawnBox(float NewSpawnRate);
@@ -78,7 +78,7 @@ private:
 	
 	static bool ShouldHappen(int percentage);
 	
-	BoxAddress SetBoxAddress();
+	EBoxAddress SetBoxAddress();
 	
 	//FULT!!!!! TA BORT EFTER SPELTEST!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	UPROPERTY(EditAnywhere)
